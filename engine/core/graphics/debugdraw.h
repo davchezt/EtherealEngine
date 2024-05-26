@@ -2,17 +2,17 @@
 
 #include "graphics.h"
 //
-#include "common/debugdraw/debugdraw.h"
+#include "debugdraw/debugdraw.h"
 #include <cstdint>
 
 namespace gfx
 {
 struct dd_raii
 {
-	dd_raii(view_id _viewId);
+    dd_raii(view_id _viewId);
 
-	~dd_raii();
+    ~dd_raii();
 
-	DebugDrawEncoder encoder;
+    DebugDrawEncoder encoder;
 };
-}
+} // namespace gfx

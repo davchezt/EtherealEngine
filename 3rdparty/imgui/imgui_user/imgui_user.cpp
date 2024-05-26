@@ -1,5 +1,4 @@
 #include "imgui_user.h"
-#define IMGUI_DEFINE_MATH_OPERATORS
 #include "../imgui/imgui_internal.h"
 #include <unordered_map>
 #include <vector>
@@ -152,8 +151,8 @@ void RenderFrameEx(ImVec2 p_min, ImVec2 p_max, bool border, float rounding, floa
 	if(border)
 	{
 		window->DrawList->AddRect(p_min + ImVec2(1, 1), p_max + ImVec2(1, 1),
-								  GetColorU32(ImGuiCol_BorderShadow), rounding, 15, thickness);
-		window->DrawList->AddRect(p_min, p_max, GetColorU32(ImGuiCol_Border), rounding, 15, thickness);
+								  GetColorU32(ImGuiCol_BorderShadow), rounding, 0, thickness);
+		window->DrawList->AddRect(p_min, p_max, GetColorU32(ImGuiCol_Border), rounding, 0, thickness);
 	}
 }
 static void PushMultiItemsWidthsAndLabels(const char* labels[], int components, float w_full)
@@ -161,7 +160,7 @@ static void PushMultiItemsWidthsAndLabels(const char* labels[], int components, 
 	ImGuiWindow* window = GetCurrentWindow();
 	const ImGuiStyle& style = GImGui->Style;
 	if(w_full <= 0.0f)
-		w_full = GetContentRegionAvailWidth();
+		w_full = GetContentRegionAvail().x;
 
 	const float w_item_one =
 		ImMax(1.0f, (w_full - (style.ItemInnerSpacing.x * 2.0f) * (components - 1)) / (float)components) -
@@ -172,7 +171,7 @@ static void PushMultiItemsWidthsAndLabels(const char* labels[], int components, 
 }
 
 bool DragFloatNEx(const char* labels[], float* v, int components, float v_speed, float v_min, float v_max,
-				  const char* display_format, float power)
+				  const char* display_format, ImGuiSliderFlags flags)
 {
 	ImGuiWindow* window = GetCurrentWindow();
 	if(window->SkipItems)
@@ -189,7 +188,7 @@ bool DragFloatNEx(const char* labels[], float* v, int components, float v_speed,
 		PushID(i);
 		TextUnformatted(labels[i], FindRenderedTextEnd(labels[i]));
 		SameLine();
-		value_changed |= DragFloat("", &v[i], v_speed, v_min, v_max, display_format, power);
+		value_changed |= DragFloat("", &v[i], v_speed, v_min, v_max, display_format, flags);
 		SameLine(0, g.Style.ItemInnerSpacing.x);
 		PopID();
 		PopID();
@@ -201,7 +200,7 @@ bool DragFloatNEx(const char* labels[], float* v, int components, float v_speed,
 	return value_changed;
 }
 bool DragUIntNEx(const char* labels[], unsigned int* v, int components, float v_speed, unsigned int v_min,
-				 unsigned int v_max, const char* display_format)
+				 unsigned int v_max, const char* display_format, ImGuiSliderFlags flags)
 {
 	ImGuiWindow* window = GetCurrentWindow();
 	if(window->SkipItems)
@@ -220,7 +219,7 @@ bool DragUIntNEx(const char* labels[], unsigned int* v, int components, float v_
 		SameLine();
 		int val = static_cast<int>(v[i]);
 		value_changed |=
-			DragInt("", &val, v_speed, static_cast<int>(v_min), static_cast<int>(v_max), display_format);
+			DragInt("", &val, v_speed, static_cast<int>(v_min), static_cast<int>(v_max), display_format, flags);
 		v[i] = val;
 		SameLine(0, g.Style.ItemInnerSpacing.x);
 		PopID();
@@ -234,7 +233,7 @@ bool DragUIntNEx(const char* labels[], unsigned int* v, int components, float v_
 }
 
 bool DragIntNEx(const char* labels[], int* v, int components, float v_speed, int v_min, int v_max,
-				const char* display_format)
+				const char* display_format, ImGuiSliderFlags flags)
 {
 	ImGuiWindow* window = GetCurrentWindow();
 	if(window->SkipItems)
@@ -251,7 +250,7 @@ bool DragIntNEx(const char* labels[], int* v, int components, float v_speed, int
 		PushID(i);
 		TextUnformatted(labels[i], FindRenderedTextEnd(labels[i]));
 		SameLine();
-		value_changed |= DragInt("", &v[i], v_speed, v_min, v_max, display_format);
+		value_changed |= DragInt("", &v[i], v_speed, v_min, v_max, display_format, flags);
 		SameLine(0, g.Style.ItemInnerSpacing.x);
 		PopID();
 		PopID();
@@ -437,7 +436,7 @@ int ImageButtonWithAspectAndLabel(ImTextureID texture, ImVec2 texture_size, ImVe
 
 			PopItemWidth();
 			inputActive = IsItemActive();
-			if(!inputActive && (IsMouseClicked(0) || IsMouseDragging()))
+			if(!inputActive && (IsMouseClicked(0) || IsMouseDragging(0)))
 			{
 				edit = false;
 			}

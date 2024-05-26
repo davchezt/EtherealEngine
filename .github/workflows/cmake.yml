@@ -1,0 +1,82 @@
+name: Build
+on: [push]
+jobs:
+  linux:
+    strategy:
+      matrix:
+        os: [ubuntu-20.04]
+        type: [Release]
+        compiler: [ 
+        {C_COMPILER: 'gcc', CXX_COMPILER: 'g++' },
+        {C_COMPILER: 'clang-10', CXX_COMPILER: 'clang++-10'},
+        #{C_COMPILER: 'clang-12', CXX_COMPILER: 'clang++-12' }
+        ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Clone
+        uses: actions/checkout@v3
+      - name: Pull & update submodules recursively
+        run: |
+          git submodule update --init --recursive
+      - name: Install Dependencies
+        run: |
+          sudo apt-get install -y libglew-dev
+          sudo apt-get install libgtk-3-dev
+          sudo apt-get install libudev-dev
+      - name: Configure
+        run: cmake . -DCMAKE_BUILD_TYPE=${{ matrix.type }} -DCMAKE_C_COMPILER=${{ matrix.compiler.C_COMPILER }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.CXX_COMPILER }}
+      - name: Build
+        run: cmake --build . --config ${{ matrix.type }}
+          
+  msvc-latest:  
+    strategy:
+      matrix:
+        os: [windows-latest]
+        type: [Release]
+        
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Clone
+        uses: actions/checkout@v3
+        
+      - name: Pull & update submodules recursively
+        run: |
+          git submodule update --init --recursive
+          
+      - name: VC Vars
+        # Setup vcvars on Windows
+        # MSVC's address sanitizer attaches dependencies to several DLLs which are not in PATH
+        # vcvars will add them to PATH and allow msvc asan executables to run
+        if: matrix.os == 'windows-latest'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Configure
+        run: cmake . -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.type }}
+          
+      - name: Build
+        run: cmake --build . --config ${{ matrix.type }}
+          
+  mingw-w64-latest:
+    strategy:
+      matrix:
+        os: [windows-latest]
+        type: [Release]
+        compiler: [ 
+        {C_COMPILER: 'gcc', CXX_COMPILER: 'g++' },
+        ]                           
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Clone
+        uses: actions/checkout@v3
+        
+      - name: Pull & update submodules recursively
+        run: |
+          git submodule update --init --recursive
+ 
+      - name: Setup Compiler
+        uses: egor-tensin/setup-mingw@v2
+
+      - name: Configure
+        run: cmake . -G "Ninja" -D CMAKE_BUILD_TYPE=${{ matrix.type }} -DCMAKE_C_COMPILER=${{ matrix.compiler.C_COMPILER }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler.CXX_COMPILER }}
+      - name: Build
+        run: cmake --build . --config ${{ matrix.type }}
